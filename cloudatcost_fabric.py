@@ -39,7 +39,7 @@ def _ssh_config():
         run('chmod 0700 .ssh')
         put(ssh_pub_key, '.ssh/authorized_keys')
         run('chmod 0600 .ssh/authorized_keys')
-    sshd_config = '{}/etc/ssh/sshd_config'.format(server_type)
+    sshd_config = 'config_files/{}/etc/ssh/sshd_config'.format(server_type)
     put(sshd_config, '/etc/ssh/sshd_config')
     run('rm /etc/ssh/ssh_host_*')
     run('dpkg-reconfigure openssh-server')
@@ -60,7 +60,7 @@ def _fix_devices_timeout():
     """
     run('echo 600 > /sys/block/sda/device/timeout')
     run('echo 600 > /sys/block/sr0/device/timeout')
-    put('debian_8/etc/rc.local', '/etc/rc.local')
+    put('config_files/debian_8/etc/rc.local', '/etc/rc.local')
 
 
 def _configure_hostname():
@@ -90,7 +90,7 @@ def _debian_8():
     _fix_devices_timeout()
     _configure_localtime()
     _configure_hostname()
-    put('debian_8/etc/apt/sources.list', '/etc/apt/sources.list')
+    put('config_files/debian_8/etc/apt/sources.list', '/etc/apt/sources.list')
     run('echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/backports.list')
     _apt_dist_upgrade()
     run('apt install -y login-duo silversearcher-ag htop firejail tmux unattended-upgrades sudo git irssi')
