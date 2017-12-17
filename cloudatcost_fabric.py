@@ -108,16 +108,23 @@ def _remove_user(user=None):
     run('deluser --remove-all-files {}'.format(user))
 
 
-def _ubuntu_14():
+def _ubuntu_common_config():
     """
-    Deploys a new Ubuntu 14.04.1 Cloud At Cost server.
+    Runs common configuration tasks between different Ubuntu versions.
     """
     _remove_user('user')
     _fix_devices_timeout()
     _configure_localtime()
     _configure_hostname()
-    run('echo "deb http://pkg.duosecurity.com/Ubuntu trusty main" > /etc/apt/sources.list.d/duo.list')
     run('curl -s https://duo.com/APT-GPG-KEY-DUO | apt-key add -')
+
+
+def _ubuntu_14():
+    """
+    Deploys a new Ubuntu 14.04.1 Cloud At Cost server.
+    """
+    _ubuntu_common_config()
+    run('echo "deb http://pkg.duosecurity.com/Ubuntu trusty main" > /etc/apt/sources.list.d/duo.list')
     _apt_dist_upgrade('-o Dpkg::Options::="--force-confold"')
     run('apt install -y login-duo silversearcher-ag htop unattended-upgrades')
     _ssh_config()
@@ -129,15 +136,12 @@ def _ubuntu_16():
     """
     Deploys a new Ubuntu 16 from an Ubuntu 14.04.1 Cloud At Cost server.
     """
-    _remove_user('user')
-    _fix_devices_timeout()
-    _configure_localtime()
-    _configure_hostname()
+    _ubuntu_common_config()
     run('apt update')
     run('apt install -y apt dpkg update-manager-core')
     run('do-release-upgrade')
     run('echo "deb http://pkg.duosecurity.com/Ubuntu xenial main" > /etc/apt/sources.list.d/duo.list')
-    run('curl -s https://duo.com/APT-GPG-KEY-DUO | apt-key add -')
+    run('apt update')
     run('apt install -y login-duo silversearcher-ag htop unattended-upgrades')
     _ssh_config()
     run('reboot &')
