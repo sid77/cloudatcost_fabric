@@ -69,7 +69,7 @@ def _configure_hostname():
     """
     if server_type == 'debian_8':
         sed = 'sed -i -e "s:localhost:{}:g" /etc/hostname'.format(hostname)
-    elif server_type == 'ubuntu_14':
+    elif server_type == 'ubuntu_14' or server_type == 'ubuntu_16':
         sed = 'sed -i -e "s:ubuntu:{}:g" /etc/hosts /etc/hostname'.format(hostname)
     run(sed)
 
@@ -125,18 +125,42 @@ def _ubuntu_14():
     pass
 
 
+def _ubuntu_16():
+    """
+    Deploys a new Ubuntu 16 from an Ubuntu 14.04.1 Cloud At Cost server.
+    """
+    _remove_user('user')
+    _fix_devices_timeout()
+    _configure_localtime()
+    _configure_hostname()
+    run('apt update')
+    run('apt install -y apt dpkg update-manager-core')
+    run('do-release-upgrade')
+    run('echo "deb http://pkg.duosecurity.com/Ubuntu xenial main" > /etc/apt/sources.list.d/duo.list')
+    run('curl -s https://duo.com/APT-GPG-KEY-DUO | apt-key add -')
+    run('apt install -y login-duo silversearcher-ag htop unattended-upgrades')
+    _ssh_config()
+    run('reboot &')
+    pass
+
+
 def main():
     """
     Main function.
     """
     args = _parse_args()
+    global ssh_pub_key
     ssh_pub_key = args.ssh_pub_key.name
+    global hostname
     hostname = args.hostname
+    global server_type
     server_type = args.type
     if server_type == 'debian_8':
         _debian_8()
     elif server_type == 'ubuntu_14':
         _ubuntu_14()
+    elif server_type == 'ubuntu_16':
+        _ubuntu_16()
     else:
         exit('Unkown server distribution type.')
 
