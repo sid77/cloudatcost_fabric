@@ -9,6 +9,10 @@ from fabric.operations import put
 
 # root, yay!
 env.user = 'root'
+# user configuration
+ssh_pub_key = 'unknown'
+hostname  = 'unknown'
+server_type = 'unknown'
 
 
 def _parse_args():
@@ -26,7 +30,7 @@ def _parse_args():
     return args
 
 
-def _ssh_config(server_type, ssh_pub_key):
+def _ssh_config():
     """
     Configures ssh access.
     """
@@ -59,7 +63,7 @@ def _fix_devices_timeout():
     put('debian_8/etc/rc.local', '/etc/rc.local')
 
 
-def _configure_hostname(server_type, hostname):
+def _configure_hostname():
     """
     Configures hostname.
     """
@@ -79,18 +83,18 @@ def _apt_dist_upgrade(options=''):
         run('apt dist-upgrade -y {}'.format(options))
 
 
-def _debian_8(hostname, ssh_pub_key, server_type):
+def _debian_8():
     """
     Deploys a new Debian 8 Cloud At Cost server.
     """
     _fix_devices_timeout()
     _configure_localtime()
-    _configure_hostname(server_type, hostname)
+    _configure_hostname()
     put('debian_8/etc/apt/sources.list', '/etc/apt/sources.list')
     run('echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/backports.list')
     _apt_dist_upgrade()
     run('apt install -y login-duo silversearcher-ag htop firejail tmux unattended-upgrades sudo git irssi')
-    _ssh_config('debian_8', ssh_pub_key)
+    _ssh_config()
     run('reboot &')
     pass
 
@@ -104,19 +108,19 @@ def _remove_user(user=None):
     run('deluser --remove-all-files {}'.format(user))
 
 
-def _ubuntu_14(hostname, ssh_pub_key, server_type):
+def _ubuntu_14():
     """
     Deploys a new Ubuntu 14.04.1 Cloud At Cost server.
     """
     _remove_user('user')
     _fix_devices_timeout()
     _configure_localtime()
-    _configure_hostname(server_type, hostname)
+    _configure_hostname()
     run('echo "deb http://pkg.duosecurity.com/Ubuntu trusty main" > /etc/apt/sources.list.d/duo.list')
     run('curl -s https://duo.com/APT-GPG-KEY-DUO | apt-key add -')
     _apt_dist_upgrade('-o Dpkg::Options::="--force-confold"')
     run('apt install -y login-duo silversearcher-ag htop unattended-upgrades')
-    _ssh_config('ubuntu_14', ssh_pub_key)
+    _ssh_config()
     run('reboot &')
     pass
 
@@ -126,10 +130,13 @@ def main():
     Main function.
     """
     args = _parse_args()
-    if args.type == 'debian_8':
-        _debian_8(args.hostname, args.ssh_pub_key.name, 'debian_8')
-    elif args.type == 'ubuntu_14':
-        _ubuntu_14(args.hostname, args.ssh_pub_key.name, 'ubuntu_14')
+    ssh_pub_key = args.ssh_pub_key.name
+    hostname = args.hostname
+    server_type = args.type
+    if server_type == 'debian_8':
+        _debian_8()
+    elif server_type == 'ubuntu_14':
+        _ubuntu_14()
     else:
         exit('Unkown server distribution type.')
 
