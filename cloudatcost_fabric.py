@@ -95,8 +95,7 @@ def _debian_8():
     _apt_dist_upgrade()
     run('apt install -y login-duo silversearcher-ag htop firejail tmux unattended-upgrades sudo git irssi')
     _ssh_config()
-    run('reboot &')
-    pass
+    run('reboot')
 
 
 def _remove_user(user=None):
@@ -128,8 +127,7 @@ def _ubuntu_14():
     _apt_dist_upgrade('-o Dpkg::Options::="--force-confold"')
     run('apt install -y login-duo silversearcher-ag htop unattended-upgrades')
     _ssh_config()
-    run('reboot &')
-    pass
+    run('reboot')
 
 
 def _ubuntu_16():
@@ -144,20 +142,19 @@ def _ubuntu_16():
     run('apt update')
     run('apt install -y login-duo silversearcher-ag htop unattended-upgrades')
     _ssh_config()
-    run('reboot &')
-    pass
+    run('reboot')
 
 
 def main():
     """
     Main function.
     """
-    args = _parse_args()
     global ssh_pub_key
-    ssh_pub_key = args.ssh_pub_key.name
     global hostname
-    hostname = args.hostname
     global server_type
+    args = _parse_args()
+    ssh_pub_key = args.ssh_pub_key.name
+    hostname = args.hostname
     server_type = args.type
     if server_type == 'debian_8':
         _debian_8()
