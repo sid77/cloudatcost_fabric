@@ -124,7 +124,10 @@ def _ubuntu_14():
     """
     _ubuntu_common_config()
     run('echo "deb http://pkg.duosecurity.com/Ubuntu trusty main" > /etc/apt/sources.list.d/duo.list')
-    _apt_dist_upgrade('-o Dpkg::Options::="--force-confold"')
+    # grub-pc upgrade always prompt, so better run it earlier than later
+    run('apt update')
+    run('apt install -y grub-pc')
+    _apt_dist_upgrade()
     run('apt install -y login-duo silversearcher-ag htop unattended-upgrades')
     _ssh_config()
     run('reboot')
