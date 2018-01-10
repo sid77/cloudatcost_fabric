@@ -110,7 +110,7 @@ def _apt_cleanup():
     Cleans up after a dist-upgrade to a new release.
     """
     run('apt autoremove -y')
-    run("apt purge $(dpkg -l | awk '/^rc/ { print $2 }'")
+    run("apt purge -y $(dpkg -l | awk '/^rc/ { print $2 }')")
 
 
 def _debian_9():
