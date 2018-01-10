@@ -67,7 +67,7 @@ def _configure_hostname():
     """
     Configures hostname.
     """
-    if server_type == 'debian_8':
+    if server_type == 'debian_8' or server_type == 'debian_9':
         sed = 'sed -i -e "s:localhost:{}:g" /etc/hostname'.format(hostname)
     elif server_type == 'ubuntu_14' or server_type == 'ubuntu_16':
         sed = 'sed -i -e "s:ubuntu:{}:g" /etc/hosts /etc/hostname'.format(hostname)
@@ -83,16 +83,45 @@ def _apt_dist_upgrade(options=''):
         run('apt dist-upgrade -y {}'.format(options))
 
 
-def _debian_8():
+def _debianlike_common_config():
     """
-    Deploys a new Debian 8 Cloud At Cost server.
+    Runs common configuration tasks between different Debian and Ubuntu versions.
     """
     _fix_devices_timeout()
     _configure_localtime()
     _configure_hostname()
+
+
+def _debian_8():
+    """
+    Deploys a new Debian 8 Cloud At Cost server.
+    """
+    _debianlike_common_config()
     put('config_files/debian_8/etc/apt/sources.list', '/etc/apt/sources.list')
     run('echo "deb http://ftp.debian.org/debian jessie-backports main" > /etc/apt/sources.list.d/backports.list')
     _apt_dist_upgrade()
+    run('apt install -y login-duo silversearcher-ag htop firejail tmux unattended-upgrades sudo git irssi')
+    _ssh_config()
+    run('reboot')
+
+
+def _apt_cleanup():
+    """
+    Cleans up after a dist-upgrade to a new release.
+    """
+    run('apt autoremove -y')
+    run("apt purge $(dpkg -l | awk '/^rc/ { print $2 }'")
+
+
+def _debian_9():
+    """
+    Deploys a new Debian 9 from a Debian 8 Cloud At Cost server.
+    """
+    _debianlike_common_config()
+    put('config_files/debian_9/etc/apt/sources.list', '/etc/apt/sources.list')
+    run('echo "deb http://ftp.debian.org/debian stretch-backports main" > /etc/apt/sources.list.d/backports.list')
+    _apt_dist_upgrade()
+    _apt_cleanup()
     run('apt install -y login-duo silversearcher-ag htop firejail tmux unattended-upgrades sudo git irssi')
     _ssh_config()
     run('reboot')
@@ -112,9 +141,7 @@ def _ubuntu_common_config():
     Runs common configuration tasks between different Ubuntu versions.
     """
     _remove_user('user')
-    _fix_devices_timeout()
-    _configure_localtime()
-    _configure_hostname()
+    _debianlike_common_config()
     run('curl -s https://duo.com/APT-GPG-KEY-DUO | apt-key add -')
 
 
@@ -161,6 +188,8 @@ def main():
     server_type = args.type
     if server_type == 'debian_8':
         _debian_8()
+    elif server_type == 'debian_9':
+        _debian_9()
     elif server_type == 'ubuntu_14':
         _ubuntu_14()
     elif server_type == 'ubuntu_16':
